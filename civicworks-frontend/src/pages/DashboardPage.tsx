@@ -94,7 +94,6 @@ export default function DashboardPage() {
 
     return (
         <div className="app-shell">
-            {/* Sidebar */}
             <aside className="sidebar">
                 <div className="brand">
                     <div className="brand-logo" />
@@ -141,36 +140,42 @@ export default function DashboardPage() {
                     <div className="kpi"><h4>Theme</h4><div className="v" style={{ textTransform: 'capitalize' }}>{theme}</div></div>
                 </div>
 
-                {tab === "feed" && (
-                    <FeedSection
-                        reports={reports}
-                        onRefresh={load}
-                        onViewOnMap={(lat, lng) => {
-                            setMyPos({ lat, lng });
-                            setTab("nearby");
-                        }}
-                    />
-                )}
+                {
+                    tab === "feed" && (
+                        <FeedSection
+                            reports={reports}
+                            onRefresh={load}
+                            onViewOnMap={(lat, lng) => {
+                                setMyPos({ lat, lng });
+                                setTab("nearby");
+                            }}
+                        />
+                    )
+                }
 
-                {tab === "complaint" && (
-                    <ComplaintSection
-                        onSubmitted={async () => {
-                            await load();
-                            setJustSubmittedAt(Date.now());
-                            setTab("feed"); // jump to feed
-                        }}
-                    />
-                )}
+                {
+                    tab === "complaint" && (
+                        <ComplaintSection
+                            onSubmitted={async () => {
+                                await load();
+                                setJustSubmittedAt(Date.now());
+                                setTab("feed"); // jump to feed
+                            }}
+                        />
+                    )
+                }
 
-                {tab === "nearby" && (
-                    <NearbySection
-                        myPos={myPos}
-                        reports={reports}
-                        nearby={nearby5km}
-                        onRefresh={load}
-                        justSubmittedAt={justSubmittedAt}
-                    />
-                )}
+                {
+                    tab === "nearby" && (
+                        <NearbySection
+                            myPos={myPos}
+                            reports={reports}
+                            nearby={nearby5km}
+                            onRefresh={load}
+                            justSubmittedAt={justSubmittedAt}
+                        />
+                    )
+                }
 
                 {tab === "profile" && <ProfilePage />}
 
@@ -428,17 +433,34 @@ function FeedSection({
 
             {reports.length === 0 ? (
                 <div className="helper" style={{ padding: 48, textAlign: 'center', fontSize: '1.1rem' }}>
+                    No reports yet. Be the first to report an issue!
+                </div>
+            ) : (
+                <div className="feed-list">
+                    {reports.map(report => (
+                        <FeedPost
+                            key={report._id || report.id}
+                            report={report}
+                            onViewOnMap={onViewOnMap}
+                            onUpdate={onRefresh}
+                        />
+                    ))}
+                </div>
+            )}
+        </section>
+    );
+}
 
 /* -------- About -------- */
-                    function AboutSection() {
+function AboutSection() {
     return (
-                    <section className="section">
-                        <h2 className="section-title"><span className="badge">About</span> CivicWorks</h2>
-                        <p>
-                            CivicWorks is a modern civic issue tracker. Capture evidence with your device camera, record your location, and submit the complaint.
-                            Authorities can review, link to projects, and publish progress and delay reasons. Sidebar + theming ensure a professional, accessible UX.
-                        </p>
-                        <p className="helper">Tip: allow camera and location permissions for the best experience.</p>
-                    </section>
-                    );
+        <section className="section">
+            <h2 className="section-title"><span className="badge">About</span> CivicWorks</h2>
+            <p>
+                CivicWorks is a modern civic issue tracker. Capture evidence with your device camera, record your location, and submit the complaint.
+                Authorities can review, link to projects, and publish progress and delay reasons. Sidebar + theming ensure a professional, accessible UX.
+            </p>
+            <p className="helper">Tip: allow camera and location permissions for the best experience.</p>
+        </section>
+    );
 }
