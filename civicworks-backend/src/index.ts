@@ -11,12 +11,28 @@ import profileRoutes from './routes/profileRoutes';
 
 const app = express();
 const PORT = Number(process.env.PORT || 4000);
-const ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
 
 // Connect to Database
 connectDB();
 
-app.use(cors({ origin: ORIGIN }));
+// CORS configuration - supports multiple origins for production
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',')
+  : ['http://localhost:3000'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 app.use(express.json({ limit: '5mb' }));
 
 // Ensure uploads dir
