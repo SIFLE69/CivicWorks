@@ -73,7 +73,7 @@ export default function DashboardPage() {
     // theme apply
     useEffect(() => {
         const root = document.documentElement;
-        if (theme === "dark") root.classList.add("dark"); else root.classList.remove("dark");
+        root.setAttribute('data-theme', theme);
         localStorage.setItem("theme", theme);
     }, [theme]);
 
@@ -96,30 +96,42 @@ export default function DashboardPage() {
         <div className="app-shell">
             <aside className="sidebar">
                 <div className="brand">
-                    <div className="brand-logo" />
+                    <div className="brand-logo">🏛️</div>
                     <div>
                         <div className="brand-title">CivicWorks</div>
-                        <div style={{ fontSize: 12, opacity: .8 }}>Public Infra Complaints</div>
+                        <div style={{ fontSize: 12, opacity: .8 }}>Public Infrastructure</div>
                     </div>
                 </div>
 
                 <div className="nav" role="navigation" aria-label="Primary">
-                    <button className={tab === 'feed' ? 'active' : ''} onClick={() => setTab('feed')}>Feed</button>
-                    <button className={tab === 'complaint' ? 'active' : ''} onClick={() => setTab('complaint')}>New Complaint</button>
-                    <button className={tab === 'nearby' ? 'active' : ''} onClick={() => setTab('nearby')}>Map View</button>
-                    <button className={tab === 'profile' ? 'active' : ''} onClick={() => setTab('profile')}>Profile</button>
-                    <button className={tab === 'about' ? 'active' : ''} onClick={() => setTab('about')}>About</button>
+                    <button className={tab === 'feed' ? 'active' : ''} onClick={() => setTab('feed')}>
+                        <span className="nav-icon">📱</span>Feed
+                    </button>
+                    <button className={tab === 'complaint' ? 'active' : ''} onClick={() => setTab('complaint')}>
+                        <span className="nav-icon">➕</span>New Complaint
+                    </button>
+                    <button className={tab === 'nearby' ? 'active' : ''} onClick={() => setTab('nearby')}>
+                        <span className="nav-icon">🗺️</span>Map View
+                    </button>
+                    <button className={tab === 'profile' ? 'active' : ''} onClick={() => setTab('profile')}>
+                        <span className="nav-icon">👤</span>Profile
+                    </button>
+                    <button className={tab === 'about' ? 'active' : ''} onClick={() => setTab('about')}>
+                        <span className="nav-icon">ℹ️</span>About
+                    </button>
                 </div>
 
                 <div className="theme-switch">
                     <span>Theme:</span>
                     <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-                        {theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
+                        {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
                     </button>
                 </div>
 
-                <div style={{ padding: 16 }}>
-                    <p>Welcome, {user?.name}</p>
+                <div style={{ padding: 16, marginTop: 'auto', borderTop: '1px solid var(--border-color)' }}>
+                    <p style={{ margin: '0 0 12px 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                        Welcome, {user?.name}
+                    </p>
                     <button className="secondary" onClick={() => { logout(); navigate('/'); }}>Logout</button>
                 </div>
             </aside>
@@ -127,7 +139,7 @@ export default function DashboardPage() {
             {/* Main */}
             <main className="main">
                 <div className="header">
-                    <div style={{ fontWeight: 800 }}>Dashboard</div>
+                    <div style={{ fontWeight: 700, fontSize: '1.125rem' }}>Dashboard</div>
                     <div className="row">
                         <button className="secondary" onClick={load}>Refresh</button>
                     </div>
@@ -140,42 +152,36 @@ export default function DashboardPage() {
                     <div className="kpi"><h4>Theme</h4><div className="v" style={{ textTransform: 'capitalize' }}>{theme}</div></div>
                 </div>
 
-                {
-                    tab === "feed" && (
-                        <FeedSection
-                            reports={reports}
-                            onRefresh={load}
-                            onViewOnMap={(lat, lng) => {
-                                setMyPos({ lat, lng });
-                                setTab("nearby");
-                            }}
-                        />
-                    )
-                }
+                {tab === "feed" && (
+                    <FeedSection
+                        reports={reports}
+                        onRefresh={load}
+                        onViewOnMap={(lat, lng) => {
+                            setMyPos({ lat, lng });
+                            setTab("nearby");
+                        }}
+                    />
+                )}
 
-                {
-                    tab === "complaint" && (
-                        <ComplaintSection
-                            onSubmitted={async () => {
-                                await load();
-                                setJustSubmittedAt(Date.now());
-                                setTab("feed"); // jump to feed
-                            }}
-                        />
-                    )
-                }
+                {tab === "complaint" && (
+                    <ComplaintSection
+                        onSubmitted={async () => {
+                            await load();
+                            setJustSubmittedAt(Date.now());
+                            setTab("feed");
+                        }}
+                    />
+                )}
 
-                {
-                    tab === "nearby" && (
-                        <NearbySection
-                            myPos={myPos}
-                            reports={reports}
-                            nearby={nearby5km}
-                            onRefresh={load}
-                            justSubmittedAt={justSubmittedAt}
-                        />
-                    )
-                }
+                {tab === "nearby" && (
+                    <NearbySection
+                        myPos={myPos}
+                        reports={reports}
+                        nearby={nearby5km}
+                        onRefresh={load}
+                        justSubmittedAt={justSubmittedAt}
+                    />
+                )}
 
                 {tab === "profile" && <ProfilePage />}
 

@@ -93,7 +93,7 @@ export function FeedPost({ report, onViewOnMap, onUpdate }: {
         try {
             await addComment(reportId, commentText);
             setCommentText('');
-            await loadComments(); // Reload comments
+            await loadComments();
         } catch (error) {
             console.error('Failed to add comment:', error);
         }
