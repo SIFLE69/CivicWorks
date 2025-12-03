@@ -58,6 +58,7 @@ export default function DashboardPage() {
     const [myPos, setMyPos] = useState<{ lat: number; lng: number } | null>(null);
     const [theme, setTheme] = useState<"light" | "dark">(() => (localStorage.getItem("theme") as "light" | "dark") || "light");
     const [justSubmittedAt, setJustSubmittedAt] = useState<number>(0); // for pulsing new marker
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
@@ -94,29 +95,37 @@ export default function DashboardPage() {
 
     return (
         <div className="app-shell">
-            <aside className="sidebar">
-                <div className="brand">
-                    <div className="brand-logo">🏛️</div>
-                    <div>
-                        <div className="brand-title">CivicWorks</div>
-                        <div style={{ fontSize: 12, opacity: .8 }}>Public Infrastructure</div>
+            {/* Mobile Menu Overlay */}
+            {mobileMenuOpen && <div className="mobile-overlay" onClick={() => setMobileMenuOpen(false)} />}
+
+            <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+                <div className="sidebar-header">
+                    <div className="brand">
+                        <div className="brand-logo">🏛️</div>
+                        <div>
+                            <div className="brand-title">CivicWorks</div>
+                            <div style={{ fontSize: 12, opacity: .8 }}>Public Infrastructure</div>
+                        </div>
                     </div>
+                    <button className="close-menu-btn" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">
+                        ✕
+                    </button>
                 </div>
 
                 <div className="nav" role="navigation" aria-label="Primary">
-                    <button className={tab === 'feed' ? 'active' : ''} onClick={() => setTab('feed')}>
+                    <button className={tab === 'feed' ? 'active' : ''} onClick={() => { setTab('feed'); setMobileMenuOpen(false); }}>
                         <span className="nav-icon">📱</span>Feed
                     </button>
-                    <button className={tab === 'complaint' ? 'active' : ''} onClick={() => setTab('complaint')}>
+                    <button className={tab === 'complaint' ? 'active' : ''} onClick={() => { setTab('complaint'); setMobileMenuOpen(false); }}>
                         <span className="nav-icon">➕</span>New Complaint
                     </button>
-                    <button className={tab === 'nearby' ? 'active' : ''} onClick={() => setTab('nearby')}>
+                    <button className={tab === 'nearby' ? 'active' : ''} onClick={() => { setTab('nearby'); setMobileMenuOpen(false); }}>
                         <span className="nav-icon">🗺️</span>Map View
                     </button>
-                    <button className={tab === 'profile' ? 'active' : ''} onClick={() => setTab('profile')}>
+                    <button className={tab === 'profile' ? 'active' : ''} onClick={() => { setTab('profile'); setMobileMenuOpen(false); }}>
                         <span className="nav-icon">👤</span>Profile
                     </button>
-                    <button className={tab === 'about' ? 'active' : ''} onClick={() => setTab('about')}>
+                    <button className={tab === 'about' ? 'active' : ''} onClick={() => { setTab('about'); setMobileMenuOpen(false); }}>
                         <span className="nav-icon">ℹ️</span>About
                     </button>
                 </div>
@@ -139,6 +148,11 @@ export default function DashboardPage() {
             {/* Main */}
             <main className="main">
                 <div className="header">
+                    <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(true)} aria-label="Open menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
                     <div style={{ fontWeight: 700, fontSize: '1.125rem' }}>Dashboard</div>
                     <div className="row">
                         <button className="secondary" onClick={load}>Refresh</button>
