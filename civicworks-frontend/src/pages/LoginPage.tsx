@@ -1,77 +1,77 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../lib/api';
 
 export default function LoginPage() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const { login } = useAuth();
-    const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            const { data } = await axios.post('http://localhost:4000/api/auth/login', { email, password });
-            login(data);
-            navigate('/dashboard');
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Login failed');
-        }
-    };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { data } = await api.post('/auth/login', { email, password });
+      login(data);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Login failed');
+    }
+  };
 
-    return (
-        <div className="auth-page">
-            <div className="auth-container">
-                <div className="auth-header">
-                    <Link to="/" className="brand-link">
-                        <div className="brand-logo-small" />
-                        <span className="brand-text">CivicWorks</span>
-                    </Link>
-                </div>
+  return (
+    <div className="auth-page">
+      <div className="auth-container">
+        <div className="auth-header">
+          <Link to="/" className="brand-link">
+            <div className="brand-logo-small" />
+            <span className="brand-text">CivicWorks</span>
+          </Link>
+        </div>
 
-                <div className="auth-card">
-                    <h2>Welcome Back</h2>
-                    <p className="auth-subtitle">Sign in to continue reporting civic issues</p>
+        <div className="auth-card">
+          <h2>Welcome Back</h2>
+          <p className="auth-subtitle">Sign in to continue reporting civic issues</p>
 
-                    {error && <div className="error-message">{error}</div>}
+          {error && <div className="error-message">{error}</div>}
 
-                    <form onSubmit={handleSubmit} className="auth-form">
-                        <div className="form-group">
-                            <label htmlFor="email">Email Address</label>
-                            <input
-                                id="email"
-                                type="email"
-                                placeholder="you@example.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="password">Password</label>
-                            <input
-                                id="password"
-                                type="password"
-                                placeholder="Enter your password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <button type="submit" className="btn-submit">Sign In</button>
-                    </form>
-
-                    <p className="auth-footer">
-                        Don't have an account? <Link to="/register" className="auth-link">Create one</Link>
-                    </p>
-                </div>
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="form-group">
+              <label htmlFor="email">Email Address</label>
+              <input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
 
-            <style>{`
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button type="submit" className="btn-submit">Sign In</button>
+          </form>
+
+          <p className="auth-footer">
+            Don't have an account? <Link to="/register" className="auth-link">Create one</Link>
+          </p>
+        </div>
+      </div>
+
+      <style>{`
         .auth-page {
           min-height: 100vh;
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -187,6 +187,6 @@ export default function LoginPage() {
           text-decoration: underline;
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 }

@@ -127,7 +127,7 @@ export function FeedPost({ report, onViewOnMap, onUpdate }: {
                     title="Click to view on map"
                 >
                     <img
-                        src={`http://localhost:4000${report.photos[0]}`}
+                        src={report.photos[0]}
                         alt="Report evidence"
                         className="post-image"
                     />

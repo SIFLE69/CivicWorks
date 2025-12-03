@@ -382,7 +382,7 @@ function NearbySection({
                             }>
                                 <Popup>
                                     <b>{r.category}</b><br />{r.description || "(no description)"}<br />{r.lat}, {r.lng}<br />
-                                    {r.photos?.[0] && <img src={`http://localhost:4000${r.photos[0]}`} alt="evidence" style={{ maxWidth: 160, marginTop: 6 }} />}
+                                    {r.photos?.[0] && <img src={r.photos[0]} alt="evidence" style={{ maxWidth: 160, marginTop: 6 }} />}
                                     <br /><i>Reported by: {r.user?.name || 'Unknown'}</i>
                                 </Popup>
                             </Marker>
@@ -405,7 +405,7 @@ function NearbySection({
                                         <span><b>Coords:</b> {r.lat.toFixed(5)}, {r.lng.toFixed(5)}</span>
                                         <span><b>Time:</b> {new Date(r.created_at).toLocaleString()}</span>
                                     </div>
-                                    {r.photos?.[0] && <img src={`http://localhost:4000${r.photos[0]}`} alt="evidence" />}
+                                    {r.photos?.[0] && <img src={r.photos[0]} alt="evidence" />}
                                     <div>{r.description || "(no description)"}</div>
                                     <div style={{ fontSize: '0.8em', color: '#666' }}>Reported by: {r.user?.name || 'Unknown'}</div>
                                 </article>

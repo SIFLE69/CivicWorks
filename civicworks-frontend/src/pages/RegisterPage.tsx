@@ -1,91 +1,91 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api from '../lib/api';
 
 export default function RegisterPage() {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const { login } = useAuth();
-    const navigate = useNavigate();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            const { data } = await axios.post('http://localhost:4000/api/auth/register', { name, email, password });
-            login(data);
-            navigate('/dashboard');
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Registration failed');
-        }
-    };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const { data } = await api.post('/auth/register', { name, email, password });
+      login(data);
+      navigate('/dashboard');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Registration failed');
+    }
+  };
 
-    return (
-        <div className="auth-page">
-            <div className="auth-container">
-                <div className="auth-header">
-                    <Link to="/" className="brand-link">
-                        <div className="brand-logo-small" />
-                        <span className="brand-text">CivicWorks</span>
-                    </Link>
-                </div>
+  return (
+    <div className="auth-page">
+      <div className="auth-container">
+        <div className="auth-header">
+          <Link to="/" className="brand-link">
+            <div className="brand-logo-small" />
+            <span className="brand-text">CivicWorks</span>
+          </Link>
+        </div>
 
-                <div className="auth-card">
-                    <h2>Create Account</h2>
-                    <p className="auth-subtitle">Join the community and start reporting civic issues</p>
+        <div className="auth-card">
+          <h2>Create Account</h2>
+          <p className="auth-subtitle">Join the community and start reporting civic issues</p>
 
-                    {error && <div className="error-message">{error}</div>}
+          {error && <div className="error-message">{error}</div>}
 
-                    <form onSubmit={handleSubmit} className="auth-form">
-                        <div className="form-group">
-                            <label htmlFor="name">Full Name</label>
-                            <input
-                                id="name"
-                                type="text"
-                                placeholder="John Doe"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="email">Email Address</label>
-                            <input
-                                id="email"
-                                type="email"
-                                placeholder="you@example.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="password">Password</label>
-                            <input
-                                id="password"
-                                type="password"
-                                placeholder="Create a strong password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                minLength={6}
-                            />
-                        </div>
-
-                        <button type="submit" className="btn-submit">Create Account</button>
-                    </form>
-
-                    <p className="auth-footer">
-                        Already have an account? <Link to="/login" className="auth-link">Sign in</Link>
-                    </p>
-                </div>
+          <form onSubmit={handleSubmit} className="auth-form">
+            <div className="form-group">
+              <label htmlFor="name">Full Name</label>
+              <input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
             </div>
 
-            <style>{`
+            <div className="form-group">
+              <label htmlFor="email">Email Address</label>
+              <input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                type="password"
+                placeholder="Create a strong password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </div>
+
+            <button type="submit" className="btn-submit">Create Account</button>
+          </form>
+
+          <p className="auth-footer">
+            Already have an account? <Link to="/login" className="auth-link">Sign in</Link>
+          </p>
+        </div>
+      </div>
+
+      <style>{`
         .auth-page {
           min-height: 100vh;
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -201,6 +201,6 @@ export default function RegisterPage() {
           text-decoration: underline;
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 }

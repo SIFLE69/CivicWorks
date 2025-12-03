@@ -94,7 +94,7 @@ export default function ProfilePage() {
 
                                 {r.photos?.[0] && (
                                     <img
-                                        src={`http://localhost:4000${r.photos[0]}`}
+                                        src={r.photos[0]}
                                         alt="Report"
                                         className="post-image"
                                         style={{ width: '100%', borderRadius: '8px' }}
