@@ -1,8 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import path from 'path';
-import fs from 'fs';
 import connectDB from './config/db';
 import authRoutes from './routes/authRoutes';
 import reportRoutes from './routes/reportRoutes';
@@ -35,12 +33,6 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '5mb' }));
 
-// Ensure uploads dir
-const uploadDir = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-// Serve uploaded files
-app.use('/uploads', express.static(uploadDir));
 
 // Routes
 app.use('/api/auth', authRoutes);

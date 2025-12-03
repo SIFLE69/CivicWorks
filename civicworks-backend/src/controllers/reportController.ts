@@ -7,7 +7,8 @@ interface AuthRequest extends Request {
 
 export const createReport = async (req: AuthRequest, res: Response) => {
     const { category, description, lat, lng } = req.body;
-    const fileUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
+    const fileUrl = req.file ? (req.file as any).path : undefined;
+
 
     if (!category || !lat || !lng) {
         res.status(400).json({ message: 'Category, lat, and lng are required' });
