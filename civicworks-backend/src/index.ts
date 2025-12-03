@@ -13,24 +13,18 @@ const PORT = Number(process.env.PORT || 4000);
 // Connect to Database
 connectDB();
 
-// CORS configuration - supports multiple origins for production
-const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',')
-  : ['http://localhost:3000'];
+// CORS configuration - allow all origins in development, specific origins in production
+const corsOptions = process.env.NODE_ENV === 'production'
+  ? {
+    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [],
+    credentials: true
+  }
+  : {
+    origin: true, // Allow all origins in development
+    credentials: true
+  };
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
-}));
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '5mb' }));
 
 
