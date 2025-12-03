@@ -40,6 +40,15 @@ app.use('/api/reports', reportRoutes);
 app.use('/api', engagementRoutes);
 app.use('/api/profile', profileRoutes);
 
+// Root
+app.get('/', (_req, res) => {
+  res.json({
+    message: 'CivicWorks API is running',
+    health: '/api/health',
+    endpoints: ['/api/auth', '/api/reports', '/api/profile']
+  });
+});
+
 // Health
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, ts: new Date().toISOString() });
