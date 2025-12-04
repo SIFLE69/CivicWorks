@@ -13,16 +13,12 @@ const PORT = Number(process.env.PORT || 4000);
 // Connect to Database
 connectDB();
 
-// CORS configuration - allow all origins in development, specific origins in production
-const corsOptions = process.env.NODE_ENV === 'production'
-  ? {
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [],
-    credentials: true
-  }
-  : {
-    origin: true, // Allow all origins in development
-    credentials: true
-  };
+// CORS configuration - allow all origins for now
+const corsOptions = {
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Auth-Token', 'Origin']
+};
 
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '5mb' }));
