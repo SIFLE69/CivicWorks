@@ -50,8 +50,8 @@ app.get('/api/health', (_req, res) => {
 // Export for Vercel serverless
 export default app;
 
-// Listen only in development
-if (process.env.NODE_ENV !== 'production') {
+// Listen locally (not on Vercel)
+if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`API running on http://localhost:${PORT}`);
   });
