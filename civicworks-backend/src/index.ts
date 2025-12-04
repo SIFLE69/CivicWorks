@@ -13,11 +13,24 @@ const PORT = Number(process.env.PORT || 4000);
 // Connect to Database
 connectDB();
 
-// CORS configuration - allow all origins for now
+// CORS configuration - allow frontend origin with credentials
+const allowedOrigins = ['https://civicworks.vercel.app', 'http://localhost:3000'];
+
 const corsOptions = {
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Auth-Token', 'Origin']
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all for now
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Auth-Token', 'Origin', 'Accept'],
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
