@@ -12,7 +12,20 @@ const ProtectedRoute = ({ children }: { children: React.ReactElement }) => {
   if (loading) return <div>Loading...</div>;
 
   if (!user) {
-    return <Navigate to="/" />;
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
+const PublicRoute = ({ children }: { children: React.ReactElement }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) return <div>Loading...</div>;
+
+  // If user is already logged in, redirect to dashboard
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
@@ -23,9 +36,21 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/" element={
+            <PublicRoute>
+              <LandingPage />
+            </PublicRoute>
+          } />
+          <Route path="/login" element={
+            <PublicRoute>
+              <LoginPage />
+            </PublicRoute>
+          } />
+          <Route path="/register" element={
+            <PublicRoute>
+              <RegisterPage />
+            </PublicRoute>
+          } />
           <Route
             path="/dashboard"
             element={
