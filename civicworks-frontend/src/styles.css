@@ -234,6 +234,34 @@ body {
   }
 }
 
+/* Back Button */
+.back-btn {
+  all: unset;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--hover-bg);
+  transition: all 0.2s;
+  border: 1px solid var(--border-color);
+}
+
+.back-btn:hover {
+  background: var(--brand-primary);
+  color: var(--bg-secondary);
+  border-color: var(--brand-primary);
+}
+
+@media (max-width: 640px) {
+  .back-btn {
+    padding: 6px 12px;
+    font-size: 0.8125rem;
+  }
+}
+
+
 .brand {
   display: flex;
   align-items: center;
@@ -927,6 +955,24 @@ button:disabled {
 .comment-submit:hover {
   background: var(--brand-primary-hover);
 }
+
+.comment-delete-btn {
+  all: unset;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: all 0.2s;
+  opacity: 0.6;
+  margin-left: auto;
+}
+
+.comment-delete-btn:hover {
+  opacity: 1;
+  background: rgba(220, 38, 38, 0.1);
+  transform: scale(1.1);
+}
+
 
 /* ========== Camera Modal ========== */
 .modal {

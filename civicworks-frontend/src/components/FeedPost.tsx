@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { toggleLike, toggleDislike, reportFalse, addComment, getComments } from '../lib/api';
+import { toggleLike, toggleDislike, reportFalse, addComment, getComments, deleteComment } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
 type Report = {
@@ -22,7 +22,7 @@ type Report = {
 type Comment = {
     _id: string;
     text: string;
-    user: { name: string };
+    user: { name: string; _id: string };
     createdAt: string;
 };
 
@@ -96,6 +96,18 @@ export function FeedPost({ report, onViewOnMap, onUpdate }: {
             await loadComments();
         } catch (error) {
             console.error('Failed to add comment:', error);
+        }
+    };
+
+    const handleDeleteComment = async (commentId: string) => {
+        if (!window.confirm('Delete this comment?')) return;
+
+        try {
+            await deleteComment(commentId);
+            await loadComments();
+        } catch (error) {
+            console.error('Failed to delete comment:', error);
+            alert('Failed to delete comment');
         }
     };
 
@@ -180,6 +192,15 @@ export function FeedPost({ report, onViewOnMap, onUpdate }: {
                                         <div className="comment-text">{c.text}</div>
                                         <div className="comment-time">{new Date(c.createdAt).toLocaleString()}</div>
                                     </div>
+                                    {c.user._id === user?._id && (
+                                        <button
+                                            className="comment-delete-btn"
+                                            onClick={() => handleDeleteComment(c._id)}
+                                            title="Delete comment"
+                                        >
+                                            🗑️
+                                        </button>
+                                    )}
                                 </div>
                             ))
                         )}
