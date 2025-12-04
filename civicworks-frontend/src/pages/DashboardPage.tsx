@@ -153,9 +153,11 @@ export default function DashboardPage() {
                         <span></span>
                         <span></span>
                     </button>
-                    <button className="back-btn" onClick={() => window.history.back()} title="Go back">
-                        ← Back
-                    </button>
+                    {tab !== 'feed' && (
+                        <button className="back-btn" onClick={() => setTab('feed')} title="Back to feed">
+                            ← Back
+                        </button>
+                    )}
                     <div style={{ fontWeight: 700, fontSize: '1.125rem' }}>Dashboard</div>
                     <div className="row">
                         <button className="secondary" onClick={load}>Refresh</button>

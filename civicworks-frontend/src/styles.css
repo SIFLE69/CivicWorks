@@ -85,14 +85,21 @@ body {
 
 /* ========== Header ========== */
 .header {
-  background: var(--bg-secondary);
+  background: #f5f5f5;
   border-bottom: 1px solid var(--border-color);
   padding: 16px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+[data-theme='dark'] .header {
+  background: #1a1a1a;
 }
 
 @media (max-width: 640px) {
@@ -238,25 +245,24 @@ body {
 .back-btn {
   all: unset;
   cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: 8px 12px;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-primary);
-  background: var(--hover-bg);
   transition: all 0.2s;
-  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .back-btn:hover {
-  background: var(--brand-primary);
-  color: var(--bg-secondary);
-  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+  text-decoration: underline;
 }
 
 @media (max-width: 640px) {
   .back-btn {
-    padding: 6px 12px;
+    padding: 6px 8px;
     font-size: 0.8125rem;
   }
 }
