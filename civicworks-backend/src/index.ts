@@ -27,6 +27,9 @@ const corsOptions = process.env.NODE_ENV === 'production'
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '5mb' }));
 
+// Handle OPTIONS requests for CORS preflight
+app.options('*', cors(corsOptions));
+
 
 // Routes
 app.use('/api/auth', authRoutes);
