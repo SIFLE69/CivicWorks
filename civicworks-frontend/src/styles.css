@@ -96,6 +96,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
+  margin: 0;
 }
 
 [data-theme='dark'] .header {
@@ -365,15 +366,19 @@ body {
 
 /* ========== Main Content ========== */
 .main {
-  padding: 24px;
+  padding: 0;
   overflow-y: auto;
   max-height: 100vh;
   background: var(--bg-primary);
 }
 
+.main > *:not(.header) {
+  padding: 0 24px;
+}
+
 @media (max-width: 640px) {
-  .main {
-    padding: 16px;
+  .main > *:not(.header) {
+    padding: 0 16px;
   }
 }
 

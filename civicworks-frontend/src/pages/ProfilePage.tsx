@@ -62,7 +62,7 @@ export default function ProfilePage() {
                 <div className="profile-avatar">{user?.name?.[0]?.toUpperCase()}</div>
                 <div>
                     <h3>{user?.name}</h3>
-                    <p style={{ color: '#64748b' }}>{user?.email}</p>
+                    <p>{user?.email}</p>
                 </div>
             </div>
 
@@ -81,7 +81,7 @@ export default function ProfilePage() {
                             <article key={r._id} className="profile-report-card">
                                 <div className="post-header">
                                     <div className="post-category">{r.category}</div>
-                                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                                         {new Date(r.createdAt).toLocaleDateString()}
                                     </div>
                                 </div>
@@ -130,48 +130,78 @@ export default function ProfilePage() {
                     align-items: center;
                     gap: 1.5rem;
                     padding: 2rem;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    background: var(--brand-primary);
                     border-radius: 16px;
-                    color: white;
+                    color: var(--bg-secondary);
+                }
+                @media (max-width: 640px) {
+                    .profile-info {
+                        flex-direction: column;
+                        text-align: center;
+                        padding: 1.5rem;
+                    }
                 }
                 .profile-avatar {
                     width: 80px;
                     height: 80px;
                     border-radius: 50%;
-                    background: white;
-                    color: #667eea;
+                    background: var(--bg-secondary);
+                    color: var(--brand-primary);
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     font-size: 2rem;
                     font-weight: 700;
+                    flex-shrink: 0;
+                }
+                @media (max-width: 640px) {
+                    .profile-avatar {
+                        width: 60px;
+                        height: 60px;
+                        font-size: 1.5rem;
+                    }
                 }
                 .profile-info h3 {
                     margin: 0;
                     font-size: 1.5rem;
                 }
+                @media (max-width: 640px) {
+                    .profile-info h3 {
+                        font-size: 1.25rem;
+                    }
+                }
                 .profile-info p {
                     margin: 0.5rem 0 0 0;
                     opacity: 0.9;
+                    color: var(--bg-secondary);
                 }
                 .profile-report-card {
-                    background: white;
+                    background: var(--bg-secondary);
+                    border: 1px solid var(--border-color);
                     border-radius: 16px;
                     overflow: hidden;
-                    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+                    box-shadow: var(--shadow-sm);
                 }
                 .profile-report-stats {
                     display: flex;
-                    gap: 2rem;
+                    gap: 1.5rem;
                     padding: 1rem 1.5rem;
-                    background: #f8fafc;
-                    border-top: 1px solid #f1f5f9;
-                    border-bottom: 1px solid #f1f5f9;
+                    background: var(--bg-primary);
+                    border-top: 1px solid var(--border-color);
+                    border-bottom: 1px solid var(--border-color);
                     font-size: 0.9rem;
-                    color: #64748b;
+                    color: var(--text-secondary);
+                    flex-wrap: wrap;
+                }
+                @media (max-width: 640px) {
+                    .profile-report-stats {
+                        gap: 1rem;
+                        padding: 0.75rem 1rem;
+                        font-size: 0.8rem;
+                    }
                 }
                 .delete-btn {
-                    background: #ef4444;
+                    background: var(--danger);
                     color: white;
                     border: none;
                     padding: 0.5rem 1.25rem;
@@ -182,7 +212,14 @@ export default function ProfilePage() {
                     transition: all 0.2s;
                 }
                 .delete-btn:hover {
-                    background: #dc2626;
+                    background: #b91c1c;
+                    box-shadow: var(--shadow-md);
+                }
+                @media (max-width: 640px) {
+                    .delete-btn {
+                        padding: 0.4rem 1rem;
+                        font-size: 0.85rem;
+                    }
                 }
             `}</style>
         </section>

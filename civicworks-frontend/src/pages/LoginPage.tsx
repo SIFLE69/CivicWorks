@@ -26,7 +26,6 @@ export default function LoginPage() {
       <div className="auth-container">
         <div className="auth-header">
           <Link to="/" className="brand-link">
-            <div className="brand-logo-small" />
             <span className="brand-text">CivicWorks</span>
           </Link>
         </div>
