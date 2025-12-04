@@ -399,8 +399,9 @@ body {
 
 @media (max-width: 640px) {
   .kpis {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 12px;
   }
 }
 
@@ -419,6 +420,21 @@ body {
   border-color: var(--brand-primary);
 }
 
+@media (max-width: 640px) {
+  .kpi {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 8px 4px;
+  }
+  
+  .kpi:hover {
+    box-shadow: none;
+    transform: none;
+    border-color: transparent;
+  }
+}
+
 .kpi h4 {
   margin: 0 0 10px 0;
   color: var(--text-secondary);
@@ -428,11 +444,26 @@ body {
   letter-spacing: 0.05em;
 }
 
+@media (max-width: 640px) {
+  .kpi h4 {
+    font-size: 0.65rem;
+    margin: 0 0 4px 0;
+    font-weight: 500;
+  }
+}
+
 .kpi .v {
   font-weight: 800;
   font-size: 2rem;
   color: var(--text-primary);
   line-height: 1;
+}
+
+@media (max-width: 640px) {
+  .kpi .v {
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
 }
 
 /* ========== Forms & Inputs ========== */
