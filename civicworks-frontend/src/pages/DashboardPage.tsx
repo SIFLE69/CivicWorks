@@ -59,7 +59,7 @@ function PanTo({ center }: { center: [number, number] }) {
 }
 
 export default function DashboardPage() {
-    const [tab, setTab] = useState<TabKey>("feed");
+    const [tab, setTabState] = useState<TabKey>("feed");
     const [reports, setReports] = useState<Report[]>([]);
     const [myPos, setMyPos] = useState<{ lat: number; lng: number } | null>(null);
     const [theme, setTheme] = useState<"light" | "dark">(() => (localStorage.getItem("theme") as "light" | "dark") || "light");
@@ -68,6 +68,45 @@ export default function DashboardPage() {
     const [filters, setFilters] = useState<any>({});
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+
+    // Custom setTab that also updates browser history
+    const setTab = (newTab: TabKey) => {
+        if (newTab !== tab) {
+            window.history.pushState({ tab: newTab }, '', `#${newTab}`);
+            setTabState(newTab);
+        }
+    };
+
+    // Listen for browser back/forward button
+    useEffect(() => {
+        const handlePopState = (e: PopStateEvent) => {
+            const state = e.state;
+            if (state?.tab) {
+                setTabState(state.tab);
+            } else {
+                // Check URL hash
+                const hash = window.location.hash.replace('#', '') as TabKey;
+                if (['feed', 'complaint', 'nearby', 'profile', 'about'].includes(hash)) {
+                    setTabState(hash);
+                } else {
+                    setTabState('feed');
+                }
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+
+        // Set initial state based on hash
+        const hash = window.location.hash.replace('#', '') as TabKey;
+        if (['feed', 'complaint', 'nearby', 'profile', 'about'].includes(hash)) {
+            setTabState(hash);
+            window.history.replaceState({ tab: hash }, '', `#${hash}`);
+        } else {
+            window.history.replaceState({ tab: 'feed' }, '', '#feed');
+        }
+
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
 
     async function load(filterParams?: any) {
         try {
@@ -160,16 +199,8 @@ export default function DashboardPage() {
                         <span></span>
                         <span></span>
                     </button>
-                    {tab !== 'feed' && (
-                        <button className="back-btn" onClick={() => setTab('feed')} title="Back to feed">
-                            ← Back
-                        </button>
-                    )}
                     <div style={{ fontWeight: 700, fontSize: '1.125rem' }}>Dashboard</div>
-                    <div className="row" style={{ gap: '12px' }}>
-                        <NotificationBell />
-                        <button className="secondary" onClick={load}>Refresh</button>
-                    </div>
+                    <NotificationBell />
                 </div>
 
                 <div className="kpis">

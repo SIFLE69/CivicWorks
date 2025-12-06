@@ -1238,6 +1238,166 @@ button:disabled {
   }
   
   .section {
-    margin-top: 16px;
+    margin-top: 12px;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  
+  /* Smaller header on mobile */
+  .header {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  
+  .header > div {
+    font-size: 1rem !important;
+  }
+  
+  /* Feed post optimizations */
+  .feed-post {
+    padding: 12px;
+  }
+  
+  .post-header {
+    gap: 8px;
+  }
+  
+  .post-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 0.875rem;
+  }
+  
+  .post-author {
+    font-size: 0.875rem;
+  }
+  
+  .post-time {
+    font-size: 0.7rem;
+  }
+  
+  .post-category {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+  }
+  
+  .post-content {
+    font-size: 0.875rem;
+    margin: 8px 0;
+  }
+  
+  .post-image {
+    border-radius: 8px;
+    max-height: 250px;
+  }
+  
+  /* Engagement bar */
+  .engagement-bar {
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  
+  .engagement-btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    gap: 4px;
+  }
+  
+  .engagement-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+  
+  /* Forms */
+  .form-group {
+    gap: 6px;
+  }
+  
+  .input,
+  select,
+  textarea {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+  
+  button.primary,
+  button.secondary {
+    padding: 10px 16px;
+    font-size: 0.875rem;
+  }
+  
+  /* Remove margins to prevent horizontal scroll */
+  .main > *:not(.header) {
+    padding: 0 12px;
+  }
+  
+  /* Feed list spacing */
+  .feed-list {
+    gap: 12px;
+  }
+  
+  /* Profile section */
+  .profile-info {
+    gap: 12px;
+  }
+  
+  /* Comments section */
+  .comments-section {
+    padding: 12px;
+  }
+  
+  .comment-item {
+    padding: 10px;
+  }
+}
+
+/* Extra small screens (iPhone SE, etc.) */
+@media (max-width: 375px) {
+  .header {
+    padding: 8px 10px;
+  }
+  
+  .kpis {
+    gap: 4px;
+  }
+  
+  .kpi {
+    padding: 6px 2px;
+  }
+  
+  .kpi h4 {
+    font-size: 0.6rem;
+  }
+  
+  .kpi .v {
+    font-size: 1rem;
+  }
+  
+  .section {
+    padding: 12px;
+  }
+  
+  .feed-post {
+    padding: 10px;
+  }
+  
+  .post-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.75rem;
+  }
+  
+  .engagement-btn {
+    padding: 5px 8px;
+    font-size: 0.7rem;
+  }
+}
+
+/* Pull to refresh indicator (mobile) */
+@supports (-webkit-overflow-scrolling: touch) {
+  .main {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
   }
 }
