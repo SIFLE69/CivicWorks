@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { getMyReports, deleteReport } from '../lib/api';
+import { BadgeGrid, PointsDisplay } from '../components/BadgeDisplay';
 
 type Report = {
     _id: string;
@@ -20,6 +21,7 @@ export default function ProfilePage() {
     const { user } = useAuth();
     const [reports, setReports] = useState<Report[]>([]);
     const [loading, setLoading] = useState(true);
+    const [badgesExpanded, setBadgesExpanded] = useState(true);
 
     useEffect(() => {
         loadReports();
@@ -54,22 +56,59 @@ export default function ProfilePage() {
 
     return (
         <section className="section">
-            <h2 className="section-title">
-                <span className="badge">Profile</span> Your Account
-            </h2>
 
             <div className="profile-info">
                 <div className="profile-avatar">{user?.name?.[0]?.toUpperCase()}</div>
-                <div>
+                <div style={{ flex: 1 }}>
                     <h3>{user?.name}</h3>
                     <p>{user?.email}</p>
+                    <div style={{ marginTop: '8px' }}>
+                        <PointsDisplay points={user?.points || 0} />
+                    </div>
                 </div>
             </div>
 
+            {/* Badges Section */}
             <div style={{ marginTop: '2rem' }}>
-                <h3 className="section-title">
-                    <span className="badge">Reports</span> Your Complaints ({reports.length})
-                </h3>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: badgesExpanded ? '1rem' : 0,
+                        cursor: 'pointer',
+                        padding: '8px 0'
+                    }}
+                    onClick={() => setBadgesExpanded(!badgesExpanded)}
+                >
+                    <h3 style={{ margin: 0, fontSize: '1.25rem' }}>
+                        🏆 Your Badges ({user?.badges?.length || 0})
+                    </h3>
+                    <button
+                        style={{
+                            all: 'unset',
+                            cursor: 'pointer',
+                            padding: '8px 12px',
+                            background: 'var(--hover-bg)',
+                            borderRadius: '8px',
+                            fontSize: '0.875rem',
+                            color: 'var(--text-secondary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        {badgesExpanded ? '▲ Minimize' : '▼ Expand'}
+                    </button>
+                </div>
+
+                {badgesExpanded && (
+                    <BadgeGrid earnedBadges={user?.badges || []} />
+                )}
+            </div>
+
+            <div style={{ marginTop: '2rem' }}>
 
                 {reports.length === 0 ? (
                     <div className="helper" style={{ padding: 48, textAlign: 'center' }}>

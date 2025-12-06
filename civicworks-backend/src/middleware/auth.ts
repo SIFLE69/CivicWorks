@@ -25,4 +25,19 @@ const protect = async (req: AuthRequest, res: Response, next: NextFunction) => {
     }
 };
 
-export { protect };
+// Optional auth - sets user if token exists, but doesn't require it
+const optionalAuth = async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        try {
+            const token = req.headers.authorization.split(' ')[1];
+            const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+            req.user = await User.findById(decoded.id).select('-password');
+        } catch (error) {
+            // Token failed, but that's okay for optional auth
+            req.user = null;
+        }
+    }
+    next();
+};
+
+export { protect, optionalAuth };

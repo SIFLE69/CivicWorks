@@ -15,9 +15,30 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Reports
-export const getReports = async () => {
-  const { data } = await api.get('/reports');
+// Reports with search and filters
+export const getReports = async (filters?: {
+  search?: string;
+  category?: string;
+  status?: string;
+  priority?: string;
+  isEmergency?: boolean;
+  lat?: number;
+  lng?: number;
+  radius?: number;
+  sortBy?: string;
+  sortOrder?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  const params = new URLSearchParams();
+  if (filters) {
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== '' && value !== 'all') {
+        params.append(key, String(value));
+      }
+    });
+  }
+  const { data } = await api.get(`/reports?${params.toString()}`);
   return data;
 };
 
@@ -25,6 +46,36 @@ export const createReportMultipart = async (formData: FormData) => {
   const { data } = await api.post('/reports', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
+  return data;
+};
+
+// Increment view count for a report
+export const incrementViewCount = async (reportId: string) => {
+  const { data } = await api.post(`/reports/${reportId}/view`);
+  return data;
+};
+
+// Escalate report
+export const escalateReport = async (reportId: string, reason: string) => {
+  const { data } = await api.post(`/reports/${reportId}/escalate`, { reason });
+  return data;
+};
+
+// De-escalate report
+export const deEscalateReport = async (reportId: string, reason?: string) => {
+  const { data } = await api.post(`/reports/${reportId}/de-escalate`, { reason });
+  return data;
+};
+
+// Update report status
+export const updateReportStatus = async (reportId: string, status: string, note?: string) => {
+  const { data } = await api.patch(`/reports/${reportId}/status`, { status, note });
+  return data;
+};
+
+// Get report statistics
+export const getReportStats = async () => {
+  const { data } = await api.get('/reports/stats');
   return data;
 };
 
@@ -69,4 +120,49 @@ export const deleteReport = async (reportId: string) => {
   const { data } = await api.delete(`/profile/reports/${reportId}`);
   return data;
 };
+
+// Notifications
+export const getNotifications = async (page = 1, limit = 20, unreadOnly = false) => {
+  const { data } = await api.get(`/notifications?page=${page}&limit=${limit}&unreadOnly=${unreadOnly}`);
+  return data;
+};
+
+export const markNotificationAsRead = async (notificationId: string) => {
+  const { data } = await api.patch(`/notifications/${notificationId}/read`);
+  return data;
+};
+
+export const markAllNotificationsAsRead = async () => {
+  const { data } = await api.patch('/notifications/read-all');
+  return data;
+};
+
+export const deleteNotification = async (notificationId: string) => {
+  const { data } = await api.delete(`/notifications/${notificationId}`);
+  return data;
+};
+
+// User settings
+export const updateUserLanguage = async (language: string) => {
+  const { data } = await api.patch('/profile/language', { language });
+  return data;
+};
+
+export const updateNotificationSettings = async (settings: {
+  statusUpdates?: boolean;
+  comments?: boolean;
+  likes?: boolean;
+  emailNotifications?: boolean;
+}) => {
+  const { data } = await api.patch('/profile/notification-settings', settings);
+  return data;
+};
+
+// Get user badges
+export const getUserBadges = async (userId?: string) => {
+  const { data } = await api.get(userId ? `/profile/${userId}/badges` : '/profile/badges');
+  return data;
+};
+
 export default api;
+

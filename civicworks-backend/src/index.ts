@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes';
 import reportRoutes from './routes/reportRoutes';
 import engagementRoutes from './routes/engagementRoutes';
 import profileRoutes from './routes/profileRoutes';
+import notificationRoutes from './routes/notificationRoutes';
 
 const app = express();
 const PORT = Number(process.env.PORT || 4000);
@@ -13,31 +14,18 @@ const PORT = Number(process.env.PORT || 4000);
 // Connect to Database
 connectDB();
 
-// CORS configuration - allow frontend origin with credentials
-const allowedOrigins = ['https://civicworks.vercel.app', 'http://localhost:3000'];
-
-const corsOptions = {
-  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-    // Allow requests with no origin (like mobile apps or curl)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(null, true); // Allow all for now
-    }
-  },
+// CORS configuration - allow all origins for development
+app.use(cors({
+  origin: true, // Allow all origins
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Auth-Token', 'Origin', 'Accept'],
-  optionsSuccessStatus: 200
-};
+}));
 
-app.use(cors(corsOptions));
 app.use(express.json({ limit: '5mb' }));
 
 // Handle OPTIONS requests for CORS preflight
-app.options('*', cors(corsOptions));
+app.options('*', cors());
 
 
 // Routes
@@ -45,13 +33,14 @@ app.use('/api/auth', authRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api', engagementRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Root
 app.get('/', (_req, res) => {
   res.json({
     message: 'CivicWorks API is running',
     health: '/api/health',
-    endpoints: ['/api/auth', '/api/reports', '/api/profile']
+    endpoints: ['/api/auth', '/api/reports', '/api/profile', '/api/notifications']
   });
 });
 
