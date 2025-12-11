@@ -131,6 +131,11 @@ export default function RegisterPage() {
         .brand-text {
           color: #111827;
         }
+        .auth-logo-img {
+          height: 48px;
+          width: auto;
+          object-fit: contain;
+        }
         .auth-card {
           background: #ffffff;
           border-radius: 20px;

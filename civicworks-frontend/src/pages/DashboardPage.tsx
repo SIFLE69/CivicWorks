@@ -535,7 +535,7 @@ function NearbySection({
                                     <div className="meta">
                                         <span><b>Category:</b> {r.category}</span>
                                         <span><b>Coords:</b> {r.lat.toFixed(5)}, {r.lng.toFixed(5)}</span>
-                                        <span><b>Time:</b> {new Date(r.created_at).toLocaleString()}</span>
+                                        <span><b>Time:</b> {new Date(r.created_at || r.createdAt).toLocaleString()}</span>
                                     </div>
                                     {r.photos?.[0] && <img src={r.photos[0]} alt="evidence" />}
                                     <div>{r.description || "(no description)"}</div>
@@ -917,13 +917,14 @@ function MobileSearchOverlay({ onClose, onFilter }: { onClose: () => void; onFil
                     align-items: center;
                     gap: 8px;
                     background: var(--bg-secondary);
-                    border: 2px solid var(--border-color);
+                    border: 1px solid transparent;
                     border-radius: 24px;
                     padding: 0 16px;
-                    transition: border-color 0.2s;
+                    transition: all 0.2s;
                 }
                 .search-input-container:focus-within {
-                    border-color: var(--brand-primary);
+                    border-color: var(--border-color);
+                    background: var(--bg-primary);
                 }
                 .search-icon {
                     color: var(--text-muted);
@@ -937,6 +938,15 @@ function MobileSearchOverlay({ onClose, onFilter }: { onClose: () => void; onFil
                     font-size: 1rem;
                     color: var(--text-primary);
                     outline: none;
+                    box-shadow: none;
+                    -webkit-appearance: none;
+                    -moz-appearance: none;
+                    appearance: none;
+                }
+                .search-input-container input:focus {
+                    outline: none;
+                    border: none;
+                    box-shadow: none;
                 }
                 .search-input-container input::placeholder {
                     color: var(--text-muted);

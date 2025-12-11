@@ -59,7 +59,7 @@ export default function ProfilePage() {
 
             <div className="profile-info">
                 <div className="profile-avatar">{user?.name?.[0]?.toUpperCase()}</div>
-                <div style={{ flex: 1 }}>
+                <div className="profile-text-container">
                     <h3>{user?.name}</h3>
                     <p>{user?.email}</p>
                     <div style={{ marginTop: '8px' }}>
@@ -182,8 +182,21 @@ export default function ProfilePage() {
                 @media (max-width: 640px) {
                     .profile-info {
                         flex-direction: column;
+                        align-items: center;
                         text-align: center;
                         padding: 1.5rem;
+                    }
+                }
+                .profile-text-container {
+                    flex: 1;
+                }
+                @media (max-width: 640px) {
+                    .profile-text-container {
+                        width: 100%;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        margin-top: 1rem;
                     }
                 }
                 .profile-avatar {
