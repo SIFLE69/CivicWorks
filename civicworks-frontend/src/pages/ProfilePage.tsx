@@ -169,9 +169,15 @@ export default function ProfilePage() {
                     align-items: center;
                     gap: 1.5rem;
                     padding: 2rem;
-                    background: var(--brand-primary);
+                    margin-top: 20px;
+                    background: linear-gradient(135deg, #0f0f1a 0%, #1e1e2f 50%, var(--brand-primary) 100%);
                     border-radius: 16px;
-                    color: var(--bg-secondary);
+                    color: #f8f9fa;
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+                }
+                [data-theme="light"] .profile-info {
+                    background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 50%, var(--brand-primary) 100%);
+                    color: #1f2937;
                 }
                 @media (max-width: 640px) {
                     .profile-info {
@@ -184,14 +190,22 @@ export default function ProfilePage() {
                     width: 80px;
                     height: 80px;
                     border-radius: 50%;
-                    background: var(--bg-secondary);
-                    color: var(--brand-primary);
+                    background: linear-gradient(135deg, #1a1a2e 0%, #2d2d44 100%);
+                    color: #f8f9fa;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     font-size: 2rem;
                     font-weight: 700;
                     flex-shrink: 0;
+                    border: 3px solid rgba(255, 255, 255, 0.15);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+                }
+                [data-theme="light"] .profile-avatar {
+                    background: linear-gradient(135deg, #ffffff 0%, #e5e7eb 100%);
+                    color: var(--brand-primary);
+                    border: 3px solid rgba(0, 0, 0, 0.08);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
                 }
                 @media (max-width: 640px) {
                     .profile-avatar {
@@ -203,6 +217,10 @@ export default function ProfilePage() {
                 .profile-info h3 {
                     margin: 0;
                     font-size: 1.5rem;
+                    color: #f8f9fa;
+                }
+                [data-theme="light"] .profile-info h3 {
+                    color: #1f2937;
                 }
                 @media (max-width: 640px) {
                     .profile-info h3 {
@@ -211,8 +229,11 @@ export default function ProfilePage() {
                 }
                 .profile-info p {
                     margin: 0.5rem 0 0 0;
-                    opacity: 0.9;
-                    color: var(--bg-secondary);
+                    opacity: 0.85;
+                    color: rgba(248, 249, 250, 0.9);
+                }
+                [data-theme="light"] .profile-info p {
+                    color: rgba(31, 41, 55, 0.8);
                 }
                 .profile-report-card {
                     background: var(--bg-secondary);
