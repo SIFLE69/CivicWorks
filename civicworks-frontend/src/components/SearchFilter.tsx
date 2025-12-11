@@ -6,6 +6,7 @@ type FilterOptions = {
     status: string;
     priority: string;
     isEmergency: boolean;
+    nearMe: boolean;
     sortBy: string;
     sortOrder: string;
 };
@@ -60,6 +61,7 @@ export function SearchFilter({
         status: initialFilters?.status || 'all',
         priority: initialFilters?.priority || 'all',
         isEmergency: initialFilters?.isEmergency || false,
+        nearMe: initialFilters?.nearMe || false,
         sortBy: initialFilters?.sortBy || 'createdAt',
         sortOrder: initialFilters?.sortOrder || 'desc',
     });
@@ -82,6 +84,7 @@ export function SearchFilter({
             status: 'all',
             priority: 'all',
             isEmergency: false,
+            nearMe: false,
             sortBy: 'createdAt',
             sortOrder: 'desc',
         };
@@ -94,6 +97,7 @@ export function SearchFilter({
         filters.status !== 'all',
         filters.priority !== 'all',
         filters.isEmergency,
+        filters.nearMe,
     ].filter(Boolean).length;
 
     return (
@@ -198,7 +202,16 @@ export function SearchFilter({
                                 checked={filters.isEmergency}
                                 onChange={(e) => handleChange('isEmergency', e.target.checked)}
                             />
-                            <span className="emergency-label">🚨 Emergency Only</span>
+                            <span className="emergency-label">Emergency Only</span>
+                        </label>
+
+                        <label className="checkbox-label">
+                            <input
+                                type="checkbox"
+                                checked={filters.nearMe}
+                                onChange={(e) => handleChange('nearMe', e.target.checked)}
+                            />
+                            <span className="near-me-label">Near Me (5km)</span>
                         </label>
 
                         <label className="checkbox-label">
@@ -268,37 +281,50 @@ export function SearchFilter({
                     all: unset;
                     cursor: pointer;
                     padding: 8px 16px;
-                    background: var(--brand-primary);
-                    color: var(--bg-secondary);
+                    background: transparent;
+                    color: var(--brand-primary);
                     font-size: 0.875rem;
                     font-weight: 600;
+                    border: 2px solid var(--brand-primary);
                     border-radius: 8px;
-                    transition: all 0.2s;
+                    transition: all 0.3s ease;
                     white-space: nowrap;
                 }
                 .search-btn:hover {
-                    background: var(--text-primary);
-                    transform: translateY(-1px);
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+                    border-color: var(--text-primary);
+                    color: var(--text-primary);
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                }
+                .search-btn:active {
+                    transform: translateY(0);
                 }
                 .filter-toggle {
                     all: unset;
                     cursor: pointer;
-                    padding: 8px;
+                    padding: 8px 12px;
+                    border: 2px solid var(--border-color);
                     border-radius: 8px;
                     display: flex;
                     align-items: center;
                     gap: 4px;
                     color: var(--text-secondary);
-                    transition: all 0.2s;
+                    transition: all 0.3s ease;
                     position: relative;
                 }
                 .filter-toggle:hover {
-                    background: var(--hover-bg);
-                    color: var(--text-primary);
+                    border-color: var(--brand-primary);
+                    color: var(--brand-primary);
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                }
+                .filter-toggle:active {
+                    transform: translateY(0);
                 }
                 .filter-toggle.has-filters {
+                    border-color: var(--brand-primary);
                     color: var(--brand-primary);
+                    background: rgba(17, 24, 39, 0.05);
                 }
                 .filter-count {
                     position: absolute;
@@ -370,6 +396,10 @@ export function SearchFilter({
                     color: var(--danger);
                     font-weight: 600;
                 }
+                .near-me-label {
+                    color: var(--brand-primary);
+                    font-weight: 600;
+                }
                 .clear-filters {
                     all: unset;
                     cursor: pointer;
@@ -382,12 +412,61 @@ export function SearchFilter({
                     color: var(--danger);
                     text-decoration: underline;
                 }
-                @media (max-width: 640px) {
+                @media (max-width: 768px) {
+                    .search-bar {
+                        flex-wrap: wrap;
+                        padding: 10px 12px;
+                        gap: 8px;
+                    }
+                    .search-input {
+                        width: 100%;
+                        order: 1;
+                    }
+                    .search-icon {
+                        order: 0;
+                    }
+                    .clear-search-btn {
+                        order: 2;
+                    }
+                    .search-btn {
+                        order: 3;
+                        flex: 1;
+                        min-width: 120px;
+                    }
+                    .filter-toggle {
+                        order: 4;
+                        flex: 1;
+                        min-width: 120px;
+                        justify-content: center;
+                    }
+                    .filter-panel {
+                        padding: 16px;
+                    }
                     .filter-group {
                         min-width: 100%;
                     }
                     .filter-row {
                         gap: 12px;
+                        flex-direction: column;
+                    }
+                    .checkbox-label {
+                        width: 100%;
+                        padding: 8px 0;
+                    }
+                    .clear-filters {
+                        margin-left: 0;
+                        width: 100%;
+                        text-align: center;
+                        padding: 8px 0;
+                    }
+                }
+                @media (max-width: 640px) {
+                    .search-bar {
+                        padding: 8px 10px;
+                    }
+                    .search-btn, .filter-toggle {
+                        font-size: 0.8125rem;
+                        padding: 6px 12px;
                     }
                 }
             `}</style>

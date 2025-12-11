@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { getReports, createReportMultipart } from "../lib/api";
+import { getReports, createReportMultipart, getNotifications, markNotificationAsRead, markAllNotificationsAsRead } from "../lib/api";
 import CameraCapture from "../components/CameraCapture";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -41,7 +41,7 @@ type Report = {
     escalatedAt?: string;
 };
 
-type TabKey = "feed" | "complaint" | "nearby" | "profile" | "about";
+type TabKey = "feed" | "complaint" | "nearby" | "profile" | "about" | "notifications";
 
 function distanceMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
     const toRad = (d: number) => d * Math.PI / 180;
@@ -66,6 +66,7 @@ export default function DashboardPage() {
     const [justSubmittedAt, setJustSubmittedAt] = useState<number>(0); // for pulsing new marker
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [filters, setFilters] = useState<any>({});
+    const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
@@ -86,7 +87,7 @@ export default function DashboardPage() {
             } else {
                 // Check URL hash
                 const hash = window.location.hash.replace('#', '') as TabKey;
-                if (['feed', 'complaint', 'nearby', 'profile', 'about'].includes(hash)) {
+                if (['feed', 'complaint', 'nearby', 'profile', 'about', 'notifications'].includes(hash)) {
                     setTabState(hash);
                 } else {
                     setTabState('feed');
@@ -147,7 +148,7 @@ export default function DashboardPage() {
             <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
                 <div className="sidebar-header">
                     <div className="brand">
-                        <div className="brand-logo">CW</div>
+                        <img src="/logo.png" alt="CW" className="brand-logo-img" />
                         <div>
                             <div className="brand-title">CivicWorks</div>
                             <div style={{ fontSize: 12, opacity: .8 }}>Public Infrastructure</div>
@@ -173,6 +174,9 @@ export default function DashboardPage() {
                     </button>
                     <button className={tab === 'about' ? 'active' : ''} onClick={() => { setTab('about'); setMobileMenuOpen(false); }}>
                         About
+                    </button>
+                    <button className={tab === 'notifications' ? 'active' : ''} onClick={() => { setTab('notifications'); setMobileMenuOpen(false); }}>
+                        Notifications
                     </button>
                 </div>
 
@@ -200,7 +204,15 @@ export default function DashboardPage() {
                         <span></span>
                     </button>
                     <div style={{ fontWeight: 700, fontSize: '1.125rem' }}>Dashboard</div>
-                    <NotificationBell />
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button className="header-search-btn" onClick={() => setMobileSearchOpen(true)} aria-label="Search">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </button>
+                        <NotificationBell />
+                    </div>
                 </div>
 
                 <div className="kpis">
@@ -246,7 +258,29 @@ export default function DashboardPage() {
                 {tab === "profile" && <ProfilePage />}
 
                 {tab === "about" && <AboutSection />}
+
+                {tab === "notifications" && <NotificationsSection />}
+
+                {mobileSearchOpen && (
+                    <MobileSearchOverlay
+                        onClose={() => setMobileSearchOpen(false)}
+                        onFilter={(newFilters) => {
+                            setFilters(newFilters);
+                            load(newFilters);
+                            setMobileSearchOpen(false);
+                            setTab('feed');
+                        }}
+                    />
+                )}
             </main>
+            <style>{`
+                .brand-logo-img {
+                    height: 40px;
+                    width: auto;
+                    object-fit: contain;
+                    display: block;
+                }
+            `}</style>
         </div>
     );
 }
@@ -530,14 +564,6 @@ function FeedSection({
 }) {
     return (
         <section className="section">
-            {/* Search and Filter */}
-            {onFilter && (
-                <SearchFilter
-                    onFilter={(filters) => {
-                        onFilter(filters);
-                    }}
-                />
-            )}
 
             {reports.length === 0 ? (
                 <div className="helper" style={{ padding: 48, textAlign: 'center', fontSize: '1.1rem' }}>
@@ -559,6 +585,833 @@ function FeedSection({
     );
 }
 
+
+
+
+
+/* -------- Mobile Search Overlay (YouTube Style with Filters) -------- */
+function MobileSearchOverlay({ onClose, onFilter }: { onClose: () => void; onFilter: (filters: any) => void }) {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchHistory, setSearchHistory] = useState<string[]>([]);
+    const [showFilters, setShowFilters] = useState(false);
+    const [searchResults, setSearchResults] = useState<Report[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [hasSearched, setHasSearched] = useState(false);
+
+    // Filter states
+    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [selectedStatus, setSelectedStatus] = useState('all');
+    const [selectedPriority, setSelectedPriority] = useState('all');
+    const [isEmergency, setIsEmergency] = useState(false);
+    const [nearMe, setNearMe] = useState(false);
+
+    useEffect(() => {
+        const history = localStorage.getItem('searchHistory');
+        if (history) {
+            setSearchHistory(JSON.parse(history));
+        }
+    }, []);
+
+    const performSearch = async (filters: any) => {
+        setLoading(true);
+        setHasSearched(true);
+        try {
+            const { getReports } = await import('../lib/api');
+            const data = await getReports(filters);
+            setSearchResults(data.reports || []);
+        } catch (error) {
+            console.error('Search failed:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSearch = () => {
+        const filters: any = {};
+
+        if (searchQuery.trim()) {
+            const newHistory = [searchQuery, ...searchHistory.filter(h => h !== searchQuery)].slice(0, 10);
+            setSearchHistory(newHistory);
+            localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+            filters.search = searchQuery;
+        }
+
+        if (selectedCategory !== 'all') filters.category = selectedCategory;
+        if (selectedStatus !== 'all') filters.status = selectedStatus;
+        if (selectedPriority !== 'all') filters.priority = selectedPriority;
+        if (isEmergency) filters.isEmergency = true;
+        if (nearMe) filters.nearMe = true;
+
+        performSearch(filters);
+    };
+
+    const handleHistoryClick = (query: string) => {
+        setSearchQuery(query);
+        performSearch({ search: query });
+    };
+
+    const handleQuickFilter = (filterType: string, value: any) => {
+        const filters: any = {};
+        if (filterType === 'category') {
+            setSelectedCategory(value);
+            filters.category = value;
+        } else if (filterType === 'priority') {
+            setSelectedPriority(value);
+            filters.priority = value;
+        } else if (filterType === 'emergency') {
+            setIsEmergency(true);
+            filters.isEmergency = true;
+        } else if (filterType === 'nearMe') {
+            setNearMe(true);
+            filters.nearMe = true;
+        }
+        performSearch(filters);
+    };
+
+    const clearHistory = () => {
+        setSearchHistory([]);
+        localStorage.removeItem('searchHistory');
+    };
+
+    const clearFilters = () => {
+        setSelectedCategory('all');
+        setSelectedStatus('all');
+        setSelectedPriority('all');
+        setIsEmergency(false);
+        setNearMe(false);
+    };
+
+    const activeFilterCount = [
+        selectedCategory !== 'all',
+        selectedStatus !== 'all',
+        selectedPriority !== 'all',
+        isEmergency,
+        nearMe
+    ].filter(Boolean).length;
+
+    return (
+        <div className="search-overlay">
+            <div className="search-overlay-header">
+                <button className="back-btn" onClick={onClose}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                </button>
+                <div className="search-input-container">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="search-icon">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input
+                        type="text"
+                        placeholder="Search complaints..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                        autoFocus
+                    />
+                    {searchQuery && (
+                        <button className="clear-input-btn" onClick={() => setSearchQuery('')}>
+                            ✕
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            <div className="search-toolbar">
+                <button
+                    className={`filter-toggle-btn ${showFilters ? 'active' : ''}`}
+                    onClick={() => setShowFilters(!showFilters)}
+                >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                    Filters
+                    {activeFilterCount > 0 && <span className="filter-badge">{activeFilterCount}</span>}
+                </button>
+                {activeFilterCount > 0 && (
+                    <button className="clear-filters-btn" onClick={clearFilters}>
+                        Clear all
+                    </button>
+                )}
+                <button className="search-action-btn" onClick={handleSearch}>
+                    Search
+                </button>
+            </div>
+
+            {showFilters && (
+                <div className="filters-panel">
+                    <div className="filter-group">
+                        <label>Category</label>
+                        <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
+                            <option value="all">All Categories</option>
+                            <option value="road">Road</option>
+                            <option value="water">Water</option>
+                            <option value="sewage">Sewage</option>
+                            <option value="streetlight">Streetlight</option>
+                            <option value="bridge">Bridge</option>
+                            <option value="building">Building</option>
+                            <option value="park">Park</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+
+                    <div className="filter-group">
+                        <label>Status</label>
+                        <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="under_review">Under Review</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+
+                    <div className="filter-group">
+                        <label>Priority</label>
+                        <select value={selectedPriority} onChange={(e) => setSelectedPriority(e.target.value)}>
+                            <option value="all">All Priority</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="critical">Critical</option>
+                        </select>
+                    </div>
+
+                    <div className="filter-checkboxes">
+                        <label className="checkbox-label">
+                            <input
+                                type="checkbox"
+                                checked={isEmergency}
+                                onChange={(e) => setIsEmergency(e.target.checked)}
+                            />
+                            <span className="emergency-text">Emergency Only</span>
+                        </label>
+
+                        <label className="checkbox-label">
+                            <input
+                                type="checkbox"
+                                checked={nearMe}
+                                onChange={(e) => setNearMe(e.target.checked)}
+                            />
+                            <span className="nearme-text">Near Me (5km)</span>
+                        </label>
+                    </div>
+                </div>
+            )}
+
+            <div className="search-content">
+                {hasSearched ? (
+                    loading ? (
+                        <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                            Loading results...
+                        </div>
+                    ) : searchResults.length > 0 ? (
+                        <>
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text-primary)' }}>
+                                Found {searchResults.length} result{searchResults.length !== 1 ? 's' : ''}
+                            </h3>
+                            <div className="search-results-list">
+                                {searchResults.map(report => (
+                                    <FeedPost
+                                        key={report._id || report.id}
+                                        report={report}
+                                        onViewOnMap={(lat, lng) => { }}
+                                        onUpdate={() => handleSearch()}
+                                    />
+                                ))}
+                            </div>
+                        </>
+                    ) : (
+                        <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                            No results found. Try adjusting your filters.
+                        </div>
+                    )
+                ) : (
+                    <>
+                        {searchHistory.length > 0 && (
+                            <>
+                                <div className="search-history-header">
+                                    <h3>Recent Searches</h3>
+                                    <button className="clear-history-btn" onClick={clearHistory}>
+                                        Clear
+                                    </button>
+                                </div>
+                                <div className="search-history-list">
+                                    {searchHistory.map((query, index) => (
+                                        <div key={index} className="history-item" onClick={() => handleHistoryClick(query)}>
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <polyline points="12 6 12 12 16 14"></polyline>
+                                            </svg>
+                                            <span>{query}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+
+                        <div className="quick-filters">
+                            <h3>Quick Filters</h3>
+                            <div className="quick-filter-chips">
+                                <button onClick={() => handleQuickFilter('category', 'road')}>Road Issues</button>
+                                <button onClick={() => handleQuickFilter('category', 'water')}>Water Problems</button>
+                                <button onClick={() => handleQuickFilter('priority', 'high')}>High Priority</button>
+                                <button onClick={() => handleQuickFilter('emergency', true)}>Emergency</button>
+                                <button onClick={() => handleQuickFilter('nearMe', true)}>Near Me</button>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
+
+            <style>{`
+                .search-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: var(--bg-primary);
+                    z-index: 1000;
+                    overflow-y: auto;
+                    animation: slideIn 0.3s ease;
+                }
+                @keyframes slideIn {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .search-overlay-header {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 12px 16px;
+                    background: var(--bg-primary);
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    border-bottom: 1px solid var(--border-color);
+                    position: sticky;
+                    top: 0;
+                    z-index: 100;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+                .back-btn {
+                    all: unset;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    color: var(--text-primary);
+                    padding: 8px;
+                    border-radius: 50%;
+                    transition: all 0.2s;
+                }
+                .back-btn:hover {
+                    background: var(--hover-bg);
+                    transform: scale(1.1);
+                }
+                .search-input-container {
+                    flex: 1;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    background: var(--bg-secondary);
+                    border: 2px solid var(--border-color);
+                    border-radius: 24px;
+                    padding: 0 16px;
+                    transition: border-color 0.2s;
+                }
+                .search-input-container:focus-within {
+                    border-color: var(--brand-primary);
+                }
+                .search-icon {
+                    color: var(--text-muted);
+                    flex-shrink: 0;
+                }
+                .search-input-container input {
+                    flex: 1;
+                    border: none;
+                    background: transparent;
+                    padding: 12px 0;
+                    font-size: 1rem;
+                    color: var(--text-primary);
+                    outline: none;
+                }
+                .search-input-container input::placeholder {
+                    color: var(--text-muted);
+                }
+                .clear-input-btn {
+                    all: unset;
+                    cursor: pointer;
+                    color: var(--text-muted);
+                    padding: 4px;
+                    font-size: 1.2rem;
+                    display: flex;
+                    align-items: center;
+                    transition: color 0.2s;
+                }
+                .clear-input-btn:hover {
+                    color: var(--text-primary);
+                }
+                .search-toolbar {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 12px 16px;
+                    background: var(--bg-primary);
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    border-bottom: 1px solid var(--border-color);
+                    position: sticky;
+                    top: 64px;
+                    z-index: 99;
+                }
+                .filter-toggle-btn {
+                    all: unset;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 8px 16px;
+                    border: 2px solid var(--border-color);
+                    border-radius: 20px;
+                    font-size: 0.875rem;
+                    font-weight: 600;
+                    color: var(--text-primary);
+                    transition: all 0.2s;
+                    position: relative;
+                }
+                .filter-toggle-btn:hover {
+                    border-color: var(--brand-primary);
+                    background: var(--hover-bg);
+                }
+                .filter-toggle-btn.active {
+                    border-color: var(--brand-primary);
+                    color: var(--brand-primary);
+                    background: rgba(17, 24, 39, 0.05);
+                }
+                [data-theme='dark'] .filter-toggle-btn.active {
+                    background: rgba(255, 255, 255, 0.05);
+                }
+                .filter-badge {
+                    background: var(--brand-primary);
+                    color: white;
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    min-width: 18px;
+                    height: 18px;
+                    border-radius: 9px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0 6px;
+                }
+                .clear-filters-btn {
+                    all: unset;
+                    cursor: pointer;
+                    font-size: 0.875rem;
+                    color: var(--danger);
+                    font-weight: 500;
+                    padding: 6px 12px;
+                }
+                .search-action-btn {
+                    all: unset;
+                    cursor: pointer;
+                    margin-left: auto;
+                    padding: 8px 20px;
+                    background: var(--brand-primary);
+                    color: white;
+                    font-weight: 600;
+                    border-radius: 20px;
+                    font-size: 0.875rem;
+                    transition: all 0.2s;
+                }
+                .search-action-btn:hover {
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                }
+                .filters-panel {
+                    padding: 16px;
+                    background: var(--card-bg);
+                    border-bottom: 1px solid var(--border-color);
+                    display: grid;
+                    gap: 16px;
+                    animation: slideDown 0.3s ease;
+                }
+                @keyframes slideDown {
+                    from { opacity: 0; max-height: 0; }
+                    to { opacity: 1; max-height: 500px; }
+                }
+                .filter-group {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                }
+                .filter-group label {
+                    font-size: 0.875rem;
+                    font-weight: 600;
+                    color: var(--text-secondary);
+                }
+                .filter-group select {
+                    padding: 10px 12px;
+                    border: 2px solid var(--border-color);
+                    border-radius: 8px;
+                    background: var(--bg-secondary);
+                    color: var(--text-primary);
+                    font-size: 0.875rem;
+                    cursor: pointer;
+                    transition: border-color 0.2s;
+                }
+                .filter-group select:focus {
+                    outline: none;
+                    border-color: var(--brand-primary);
+                }
+                .filter-checkboxes {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+                .checkbox-label {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    cursor: pointer;
+                    font-size: 0.875rem;
+                }
+                .checkbox-label input {
+                    width: 20px;
+                    height: 20px;
+                    cursor: pointer;
+                }
+                .emergency-text {
+                    color: var(--danger);
+                    font-weight: 600;
+                }
+                .nearme-text {
+                    color: var(--brand-primary);
+                    font-weight: 600;
+                }
+                .search-content {
+                    padding: 16px;
+                }
+                .search-results-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                }
+                .search-history-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 12px;
+                }
+                .search-history-header h3 {
+                    font-size: 0.875rem;
+                    font-weight: 600;
+                    color: var(--text-secondary);
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                }
+                .clear-history-btn {
+                    all: unset;
+                    cursor: pointer;
+                    font-size: 0.875rem;
+                    color: var(--brand-primary);
+                    font-weight: 500;
+                }
+                .search-history-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                    margin-bottom: 24px;
+                }
+                .history-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 12px;
+                    cursor: pointer;
+                    border-radius: 8px;
+                    transition: background 0.2s;
+                }
+                .history-item:hover {
+                    background: var(--hover-bg);
+                }
+                .history-item svg {
+                    color: var(--text-muted);
+                    flex-shrink: 0;
+                }
+                .history-item span {
+                    flex: 1;
+                    color: var(--text-primary);
+                }
+                .quick-filters h3 {
+                    font-size: 0.875rem;
+                    font-weight: 600;
+                    color: var(--text-secondary);
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    margin-bottom: 12px;
+                }
+                .quick-filter-chips {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                }
+                .quick-filter-chips button {
+                    all: unset;
+                    cursor: pointer;
+                    padding: 10px 16px;
+                    background: var(--bg-secondary);
+                    border: 2px solid var(--border-color);
+                    border-radius: 20px;
+                    font-size: 0.875rem;
+                    font-weight: 500;
+                    color: var(--text-primary);
+                    transition: all 0.2s;
+                }
+                .quick-filter-chips button:hover {
+                    border-color: var(--brand-primary);
+                    background: var(--hover-bg);
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                }
+            `}</style>
+        </div>
+    );
+}
+
+
+/* -------- Notifications Section -------- */
+function NotificationsSection() {
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState<'all' | 'unread'>('all');
+    const { user } = useAuth();
+
+    useEffect(() => {
+        loadNotifications();
+    }, []);
+
+    const loadNotifications = async () => {
+        try {
+            const data = await getNotifications();
+            // Handle both array and object responses
+            const notificationsArray = Array.isArray(data) ? data : (data?.notifications || []);
+            setNotifications(notificationsArray);
+        } catch (error) {
+            console.error('Failed to load notifications:', error);
+            setNotifications([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const markAsRead = async (id: string) => {
+        try {
+            await markNotificationAsRead(id);
+            setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
+        } catch (error) {
+            console.error('Failed to mark notification as read:', error);
+        }
+    };
+
+    const markAllAsRead = async () => {
+        try {
+            await markAllNotificationsAsRead();
+            setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+        } catch (error) {
+            console.error('Failed to mark all as read:', error);
+        }
+    };
+
+    const filteredNotifications = filter === 'all'
+        ? notifications
+        : notifications.filter(n => !n.read);
+
+    const unreadCount = notifications.filter(n => !n.read).length;
+
+    return (
+        <section className="section">
+            <div className="notifications-header">
+                <h2>Notifications</h2>
+                {unreadCount > 0 && (
+                    <button className="mark-all-btn" onClick={markAllAsRead}>
+                        Mark all as read
+                    </button>
+                )}
+            </div>
+
+            <div className="notifications-filter">
+                <button
+                    className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+                    onClick={() => setFilter('all')}
+                >
+                    All
+                </button>
+                <button
+                    className={`filter-btn ${filter === 'unread' ? 'active' : ''}`}
+                    onClick={() => setFilter('unread')}
+                >
+                    Unread {unreadCount > 0 && <span className="unread-badge">{unreadCount}</span>}
+                </button>
+            </div>
+
+            {loading ? (
+                <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    Loading notifications...
+                </div>
+            ) : filteredNotifications.length === 0 ? (
+                <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    {filter === 'unread' ? 'No unread notifications' : 'No notifications yet'}
+                </div>
+            ) : (
+                <div className="notifications-list">
+                    {filteredNotifications.map((notification) => (
+                        <div
+                            key={notification._id}
+                            className={`notification-item ${!notification.read ? 'unread' : ''}`}
+                            onClick={() => !notification.read && markAsRead(notification._id)}
+                        >
+                            <div className="notification-content">
+                                <h4>{notification.title}</h4>
+                                <p>{notification.message}</p>
+                                <span className="notification-time">
+                                    {new Date(notification.createdAt).toLocaleString()}
+                                </span>
+                            </div>
+                            {!notification.read && <div className="unread-dot"></div>}
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            <style>{`
+                .notifications-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 1.5rem;
+                }
+                .notifications-header h2 {
+                    margin: 0;
+                    font-size: 1.5rem;
+                    font-weight: 700;
+                    line-height: 1.3;
+                }
+                .mark-all-btn {
+                    all: unset;
+                    cursor: pointer;
+                    font-size: 0.875rem;
+                    color: var(--brand-primary);
+                    font-weight: 600;
+                    padding: 8px 16px;
+                    border-radius: 8px;
+                    transition: all 0.2s;
+                }
+                .mark-all-btn:hover {
+                    background: var(--hover-bg);
+                }
+                .notifications-filter {
+                    display: flex;
+                    gap: 8px;
+                    margin-bottom: 20px;
+                }
+                .filter-btn {
+                    all: unset;
+                    cursor: pointer;
+                    padding: 10px 20px;
+                    border-radius: 20px;
+                    font-size: 0.875rem;
+                    font-weight: 600;
+                    color: var(--text-primary);
+                    background: var(--card-bg);
+                    border: 1.5px solid var(--border-color);
+                    transition: all 0.2s;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    box-shadow: var(--shadow-sm);
+                }
+                .filter-btn:hover {
+                    border-color: var(--border-hover);
+                    background: var(--hover-bg);
+                }
+                .filter-btn.active {
+                    background: rgba(17, 24, 39, 0.05);
+                    color: var(--brand-primary);
+                    border-color: var(--brand-primary);
+                    border-width: 2px;
+                }
+                [data-theme='dark'] .filter-btn.active {
+                    background: rgba(255, 255, 255, 0.05);
+                    color: var(--brand-primary);
+                    border-color: var(--brand-primary);
+                    border-width: 2px;
+                }
+                .unread-badge {
+                    background: var(--danger);
+                    color: white;
+                    font-size: 0.75rem;
+                    padding: 2px 8px;
+                    border-radius: 10px;
+                    font-weight: 700;
+                }
+                .notifications-list {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+                .notification-item {
+                    background: var(--card-bg);
+                    border: 1px solid var(--border-color);
+                    border-radius: 12px;
+                    padding: 16px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    position: relative;
+                }
+                .notification-item:hover {
+                    border-color: var(--border-hover);
+                    box-shadow: var(--shadow-md);
+                }
+                .notification-item.unread {
+                    background: rgba(17, 24, 39, 0.02);
+                    border-color: var(--brand-primary);
+                }
+                [data-theme='dark'] .notification-item.unread {
+                    background: rgba(255, 255, 255, 0.02);
+                }
+                .notification-content h4 {
+                    margin: 0 0 8px 0;
+                    font-size: 1rem;
+                    font-weight: 600;
+                    color: var(--text-primary);
+                }
+                .notification-content p {
+                    margin: 0 0 8px 0;
+                    font-size: 0.875rem;
+                    color: var(--text-secondary);
+                    line-height: 1.5;
+                }
+                .notification-time {
+                    font-size: 0.75rem;
+                    color: var(--text-muted);
+                }
+                .unread-dot {
+                    position: absolute;
+                    top: 16px;
+                    right: 16px;
+                    width: 10px;
+                    height: 10px;
+                    background: var(--brand-primary);
+                    border-radius: 50%;
+                }
+            `}</style>
+        </section>
+    );
+}
 /* -------- About -------- */
 function AboutSection() {
     const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
@@ -710,18 +1563,49 @@ function AboutSection() {
                 </div>
             </div>
 
-            {/* Tip */}
+            {/* Developer Card */}
             <div style={{
-                marginTop: '2rem',
-                padding: '16px 20px',
-                background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.1), rgba(245, 158, 11, 0.1))',
-                border: '1px solid rgba(217, 119, 6, 0.3)',
-                borderRadius: '10px',
-                fontSize: '0.9rem',
-                color: 'var(--warning)'
+                marginTop: '3rem',
+                padding: '24px',
+                background: 'linear-gradient(135deg, var(--card-bg), var(--bg-tertiary))',
+                borderRadius: '16px',
+                border: '1px solid var(--border-color)',
+                textAlign: 'center',
+                boxShadow: 'var(--shadow-md)',
+                maxWidth: '650px',
+                marginLeft: 'auto',
+                marginRight: 'auto'
             }}>
-                💡 <strong>Tip:</strong> Allow camera and location permissions for the best experience.
-                Without these, you won't be able to submit new complaints.
+                <div style={{
+                    width: '80px',
+                    height: '80px',
+                    borderRadius: '50%',
+                    background: 'var(--brand-primary)',
+                    color: 'var(--bg-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '2rem',
+                    fontWeight: 700,
+                    margin: '0 auto 16px auto',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                }}>
+                    S
+                </div>
+                <h3 style={{ margin: '0 0 4px 0', fontSize: '1.25rem', fontWeight: 700 }}>Saksham</h3>
+                <p style={{ margin: '0 0 16px 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                    Full Stack Developer
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
+                    <a href="https://github.com/SIFLE69" target="_blank" rel="noopener noreferrer" className="brand-link">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" /></svg>
+                        GitHub
+                    </a>
+                    <a href="https://linkedin.com/in/saksham-saini-b0542125a" target="_blank" rel="noopener noreferrer" className="brand-link">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" /></svg>
+                        LinkedIn
+                    </a>
+                </div>
             </div>
         </section>
     );

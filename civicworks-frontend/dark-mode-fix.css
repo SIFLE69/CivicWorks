@@ -1,0 +1,10 @@
+
+/* ========== Dark Mode Filter Button Fix ========== */
+/* Ensures filter buttons have proper contrast in dark mode */
+[data-theme='dark'] .filter-btn.active,
+[data-theme='dark'] .filter-chip.active,
+[data-theme='dark'] .category-chip.active {
+  background: #18181b !important;
+  color: #fafafa !important;
+  border-color: #fafafa !important;
+}
